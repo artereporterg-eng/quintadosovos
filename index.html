@@ -19,7 +19,6 @@
 {
   "imports": {
     "@google/genai": "https://esm.sh/@google/genai@^1.36.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
     "react": "https://esm.sh/react@^19.2.3"
   }
@@ -29,32 +28,35 @@
 </head>
 <body class="bg-slate-50 text-slate-900">
 
-    <div id="app">
-        <!-- Renderização via JavaScript -->
+    <div id="root">
+        <!-- A aplicação será renderizada aqui via JavaScript -->
     </div>
 
     <script type="module">
         import { GoogleGenAI } from "https://esm.sh/@google/genai";
 
+        // --- Dados Iniciais ---
+        const initialProducts = [
+            { id: 1, name: "Incubadora Digital Automática", description: "Capacidade para 54 ovos com controle de umidade e viragem automática.", price: 850.00, category: "Incubação", image: "https://images.unsplash.com/photo-1594488358434-738980327f1c?q=80&w=400&h=400&fit=crop", rating: 4.9 },
+            { id: 2, name: "Ração Postura Premium 20kg", description: "Balanceada com cálcio e proteínas para máxima produtividade de ovos.", price: 115.90, category: "Rações", image: "https://images.unsplash.com/photo-1516467508483-a7212febe31a?q=80&w=400&h=400&fit=crop", rating: 4.8 },
+            { id: 3, name: "Bebedouro Automático Nipple", description: "Kit com 10 unidades. Evita desperdício e mantém a água sempre limpa.", price: 89.00, category: "Equipamentos", image: "https://images.unsplash.com/photo-1589923188900-85dae523342b?q=80&w=400&h=400&fit=crop", rating: 4.7 },
+            { id: 4, name: "Suplemento Vitamínico Fortalecedor", description: "Complexo A, D3 e E para crescimento saudável de pintinhos.", price: 45.50, category: "Saúde", image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=400&h=400&fit=crop", rating: 4.6 },
+            { id: 5, name: "Comedouro Tubular 15kg", description: "Chapa galvanizada anti-ferrugem com regulagem de altura.", price: 129.00, category: "Equipamentos", image: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?q=80&w=400&h=400&fit=crop", rating: 4.5 },
+            { id: 6, name: "Lâmpada de Aquecimento Cerâmica", description: "100W de potência. Emite calor sem luz, ideal para o descanso das aves.", price: 64.90, category: "Acessórios", image: "https://images.unsplash.com/photo-1520699697851-3dc68aa3a474?q=80&w=400&h=400&fit=crop", rating: 4.8 }
+        ];
+
         // --- Estado Global ---
         const state = {
-            products: [
-                { id: 1, name: "Incubadora Digital Automática", description: "Capacidade para 54 ovos com controle de umidade e viragem automática.", price: 850.00, category: "Incubação", image: "https://images.unsplash.com/photo-1594488358434-738980327f1c?q=80&w=400&h=400&fit=crop", rating: 4.9 },
-                { id: 2, name: "Ração Postura Premium 20kg", description: "Balanceada com cálcio e proteínas para máxima produtividade de ovos.", price: 115.90, category: "Rações", image: "https://images.unsplash.com/photo-1516467508483-a7212febe31a?q=80&w=400&h=400&fit=crop", rating: 4.8 },
-                { id: 3, name: "Bebedouro Automático Nipple", description: "Kit com 10 unidades. Evita desperdício e mantém a água sempre limpa.", price: 89.00, category: "Equipamentos", image: "https://images.unsplash.com/photo-1589923188900-85dae523342b?q=80&w=400&h=400&fit=crop", rating: 4.7 },
-                { id: 4, name: "Suplemento Vitamínico Fortalecedor", description: "Complexo A, D3 e E para crescimento saudável de pintinhos.", price: 45.50, category: "Saúde", image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=400&h=400&fit=crop", rating: 4.6 },
-                { id: 5, name: "Comedouro Tubular 15kg", description: "Chapa galvanizada anti-ferrugem com regulagem de altura.", price: 129.00, category: "Equipamentos", image: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?q=80&w=400&h=400&fit=crop", rating: 4.5 },
-                { id: 6, name: "Lâmpada de Aquecimento Cerâmica", description: "100W de potência. Emite calor sem luz, ideal para o descanso das aves.", price: 64.90, category: "Acessórios", image: "https://images.unsplash.com/photo-1520699697851-3dc68aa3a474?q=80&w=400&h=400&fit=crop", rating: 4.8 }
-            ],
+            products: [...initialProducts],
             cart: [],
             categories: ['Todos', 'Rações', 'Equipamentos', 'Incubação', 'Saúde', 'Acessórios'],
             selectedCategory: 'Todos',
             searchQuery: '',
-            view: 'store', // 'store' ou 'admin'
+            view: 'store',
             isLoggedIn: false,
             isCartOpen: false,
             isLoginModalOpen: false,
-            chatMessages: [{ role: 'model', content: 'Olá! Sou seu assistente AvícolaTech AI. Como posso ajudar com sua produção hoje?' }],
+            chatMessages: [{ role: 'model', content: 'Olá! Sou o assistente AvícolaTech AI. Como posso ajudar com sua produção hoje?' }],
             isChatOpen: false,
             isChatLoading: false
         };
@@ -67,7 +69,7 @@
             const prompt = `Você é um especialista em avicultura da AvícolaTech AI. 
             Use este catálogo para ajudar o cliente:
             ${context}
-            Responda em Português do Brasil com tom profissional. Ajude com manejo e nutrição.
+            Responda em Português do Brasil com tom profissional e prestativo. Ajude com manejo, nutrição e escolha de equipamentos.
             Pergunta do cliente: ${message}`;
 
             try {
@@ -77,14 +79,16 @@
                 });
                 return response.text;
             } catch (e) {
-                console.error(e);
-                return "Desculpe, tive um problema ao processar sua consulta técnica.";
+                console.error("AI Error:", e);
+                return "Desculpe, tive um problema ao processar sua consulta técnica. Por favor, tente novamente em instantes.";
             }
         }
 
-        // --- Funções de UI ---
+        // --- Motor de Renderização ---
         function render() {
-            const root = document.getElementById('app');
+            const root = document.getElementById('root');
+            if (!root) return;
+
             root.innerHTML = `
                 ${renderHeader()}
                 <main class="max-w-7xl mx-auto px-4 py-8">
@@ -104,7 +108,7 @@
             return `
             <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-amber-100">
                 <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <div class="flex items-center gap-2 cursor-pointer" onclick="changeView('store')">
+                    <div class="flex items-center gap-2 cursor-pointer" onclick="window.appActions.changeView('store')">
                         <div class="w-10 h-10 bg-amber-600 rounded-xl flex items-center justify-center text-white shadow-lg">
                             <i class="fa-solid fa-egg text-xl"></i>
                         </div>
@@ -119,11 +123,11 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-4">
-                        <button onclick="handleAdminToggle()" class="px-4 py-2 rounded-xl text-sm font-bold transition-all ${state.view === 'admin' ? 'bg-slate-800 text-white' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'}">
+                        <button onclick="window.appActions.handleAdminToggle()" class="px-4 py-2 rounded-xl text-sm font-bold transition-all ${state.view === 'admin' ? 'bg-slate-800 text-white' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'}">
                             <i class="fa-solid ${state.view === 'admin' ? 'fa-shop' : 'fa-gear'} mr-2"></i>
                             <span class="hidden sm:inline">${state.view === 'admin' ? 'Ver Loja' : 'Painel Admin'}</span>
                         </button>
-                        <button onclick="toggleCart()" class="relative p-2 text-slate-500 hover:text-amber-600">
+                        <button onclick="window.appActions.toggleCart()" class="relative p-2 text-slate-500 hover:text-amber-600 transition-all active:scale-95">
                             <i class="fa-solid fa-basket-shopping text-xl"></i>
                             ${cartCount > 0 ? `<span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full ring-2 ring-white">${cartCount}</span>` : ''}
                         </button>
@@ -135,7 +139,8 @@
         function renderStore() {
             const filtered = state.products.filter(p => {
                 const matchesCat = state.selectedCategory === 'Todos' || p.category === state.selectedCategory;
-                const matchesSearch = p.name.toLowerCase().includes(state.searchQuery.toLowerCase());
+                const matchesSearch = p.name.toLowerCase().includes(state.searchQuery.toLowerCase()) || 
+                                     p.description.toLowerCase().includes(state.searchQuery.toLowerCase());
                 return matchesCat && matchesSearch;
             });
 
@@ -143,33 +148,37 @@
             <section class="mb-12 relative rounded-[2rem] overflow-hidden bg-emerald-900 text-white p-8 md:p-16">
                 <div class="relative z-10 max-w-xl">
                     <span class="bg-amber-500 text-amber-950 px-3 py-1 rounded-full text-xs font-bold uppercase mb-4 inline-block">Tecnologia no Campo</span>
-                    <h2 class="text-4xl md:text-5xl font-extrabold mb-6">Sua produção avícola mais inteligente.</h2>
+                    <h2 class="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">Sua produção avícola mais inteligente.</h2>
                     <p class="text-emerald-100 text-lg mb-8">Nutrição de precisão e equipamentos de ponta para sua criação.</p>
-                    <button onclick="document.getElementById('catalog').scrollIntoView()" class="bg-amber-500 text-amber-950 px-8 py-3 rounded-full font-bold hover:bg-amber-400 shadow-xl">Ver Catálogo</button>
+                    <button onclick="document.getElementById('catalog').scrollIntoView({behavior: 'smooth'})" class="bg-amber-500 text-amber-950 px-8 py-3 rounded-full font-bold hover:bg-amber-400 shadow-xl transition-all active:scale-95">Ver Catálogo</button>
                 </div>
                 <img src="https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?q=80&w=2070&auto=format&fit=crop" class="absolute inset-0 w-full h-full object-cover opacity-20" alt="Farm">
             </section>
-            <div id="catalog" class="mb-8 flex gap-2 overflow-x-auto scrollbar-hide">
+            
+            <div id="catalog" class="mb-8 flex gap-2 overflow-x-auto scrollbar-hide py-2">
                 ${state.categories.map(cat => `
-                    <button onclick="setCategory('${cat}')" class="px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap border transition-all ${state.selectedCategory === cat ? 'bg-amber-600 text-white border-amber-600 shadow-lg' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'}">
+                    <button onclick="window.appActions.setCategory('${cat}')" class="px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap border transition-all ${state.selectedCategory === cat ? 'bg-amber-600 text-white border-amber-600 shadow-lg' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'}">
                         ${cat}
                     </button>
                 `).join('')}
             </div>
+
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 ${filtered.map(p => `
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden group hover:shadow-md transition-all">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden group hover:shadow-md transition-all flex flex-col">
                         <div class="aspect-square bg-slate-100 overflow-hidden relative">
-                            <img src="${p.image}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" alt="${p.name}">
-                            <div class="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded text-xs font-bold">★ ${p.rating}</div>
+                            <img src="${p.image}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="${p.name}">
+                            <div class="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded text-xs font-bold shadow-sm">★ ${p.rating}</div>
                         </div>
-                        <div class="p-5">
-                            <span class="text-[10px] font-bold text-amber-600 uppercase mb-1 block">${p.category}</span>
-                            <h3 class="font-bold text-slate-800 truncate">${p.name}</h3>
-                            <p class="text-slate-500 text-xs line-clamp-2 mt-1 h-8">${p.description}</p>
-                            <div class="flex items-center justify-between mt-4">
+                        <div class="p-5 flex-1 flex flex-col">
+                            <span class="text-[10px] font-bold text-amber-600 uppercase mb-1 block tracking-wider">${p.category}</span>
+                            <h3 class="font-bold text-slate-800 line-clamp-1 mb-1">${p.name}</h3>
+                            <p class="text-slate-500 text-xs line-clamp-2 h-8 mb-4">${p.description}</p>
+                            <div class="mt-auto flex items-center justify-between pt-2">
                                 <span class="text-lg font-bold text-slate-900">R$ ${p.price.toFixed(2)}</span>
-                                <button onclick="addToCart(${p.id})" class="bg-amber-600 text-white p-2.5 rounded-xl hover:bg-amber-700 active:scale-95 shadow-lg shadow-amber-100"><i class="fa-solid fa-cart-plus"></i></button>
+                                <button onclick="window.appActions.addToCart(${p.id})" class="bg-amber-600 text-white p-2.5 rounded-xl hover:bg-amber-700 active:scale-95 shadow-lg shadow-amber-100 transition-all">
+                                    <i class="fa-solid fa-cart-plus"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -182,11 +191,12 @@
             return `
             <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden animate-fade-in">
                 <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                    <h2 class="text-xl font-bold text-slate-800">Gerenciamento de Inventário</h2>
-                    <button onclick="onLogout()" class="text-slate-400 hover:text-red-500 text-sm font-medium"><i class="fa-solid fa-right-from-bracket mr-2"></i>Sair</button>
+                    <h2 class="text-xl font-bold text-slate-800">Painel de Controle</h2>
+                    <button onclick="window.appActions.onLogout()" class="text-slate-400 hover:text-red-500 text-sm font-medium transition-colors">
+                        <i class="fa-solid fa-right-from-bracket mr-2"></i>Sair
+                    </button>
                 </div>
                 <div class="p-6">
-                    <p class="text-sm text-slate-500 mb-6">Administração simplificada de produtos e categorias avícolas.</p>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left">
                             <thead class="bg-slate-50 text-slate-400 text-xs font-bold uppercase tracking-wider">
@@ -200,11 +210,18 @@
                             <tbody class="divide-y divide-slate-100">
                                 ${state.products.map(p => `
                                     <tr>
-                                        <td class="px-6 py-4 font-medium text-slate-800">${p.name}</td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center gap-3">
+                                                <img src="${p.image}" class="w-8 h-8 rounded object-cover shadow-sm">
+                                                <span class="font-medium text-slate-800">${p.name}</span>
+                                            </div>
+                                        </td>
                                         <td class="px-6 py-4 text-sm text-slate-500">${p.category}</td>
                                         <td class="px-6 py-4 font-bold">R$ ${p.price.toFixed(2)}</td>
                                         <td class="px-6 py-4 text-right">
-                                            <button onclick="deleteProduct(${p.id})" class="p-2 text-red-500 hover:bg-red-50 rounded-lg"><i class="fa-solid fa-trash"></i></button>
+                                            <button onclick="window.appActions.deleteProduct(${p.id})" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
                                         </td>
                                     </tr>
                                 `).join('')}
@@ -218,26 +235,31 @@
         function renderCartDrawer() {
             const total = state.cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
             return `
-            <div id="cart-drawer-overlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[40] transition-opacity duration-300 ${state.isCartOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}" onclick="toggleCart()"></div>
+            <div id="cart-drawer-overlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[40] transition-opacity duration-300 ${state.isCartOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}" onclick="window.appActions.toggleCart()"></div>
             <div id="cart-drawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-[50] transition-transform duration-300 transform ${state.isCartOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col">
                 <div class="p-6 border-b flex items-center justify-between">
-                    <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-shopping-basket text-amber-600 mr-2"></i>Seu Carrinho</h2>
-                    <button onclick="toggleCart()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+                    <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-shopping-basket text-amber-600"></i>
+                        Seu Carrinho
+                    </h2>
+                    <button onclick="window.appActions.toggleCart()" class="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                        <i class="fa-solid fa-xmark text-xl text-slate-400"></i>
+                    </button>
                 </div>
                 <div class="flex-1 overflow-y-auto p-6 space-y-4">
-                    ${state.cart.length === 0 ? '<div class="text-center py-20 text-slate-400"><i class="fa-solid fa-basket-shopping text-4xl mb-4 block opacity-20"></i>Vazio</div>' : 
+                    ${state.cart.length === 0 ? '<div class="text-center py-20 text-slate-400">Seu carrinho está vazio.</div>' : 
                         state.cart.map(item => `
-                            <div class="flex gap-4">
-                                <img src="${item.image}" class="w-16 h-16 rounded-lg object-cover">
+                            <div class="flex gap-4 group">
+                                <img src="${item.image}" class="w-16 h-16 rounded-lg object-cover bg-slate-100">
                                 <div class="flex-1">
-                                    <h4 class="font-bold text-sm truncate">${item.name}</h4>
+                                    <h4 class="font-bold text-sm truncate text-slate-800">${item.name}</h4>
                                     <div class="flex items-center justify-between mt-2">
-                                        <div class="flex items-center border rounded-lg overflow-hidden text-xs">
-                                            <button onclick="updateQty(${item.id}, -1)" class="px-2 py-1 hover:bg-slate-100">-</button>
-                                            <span class="px-2 font-bold">${item.quantity}</span>
-                                            <button onclick="updateQty(${item.id}, 1)" class="px-2 py-1 hover:bg-slate-100">+</button>
+                                        <div class="flex items-center border border-slate-200 rounded-lg text-xs overflow-hidden">
+                                            <button onclick="window.appActions.updateQty(${item.id}, -1)" class="px-2 py-1 hover:bg-slate-100 transition-colors">-</button>
+                                            <span class="px-3 font-bold text-slate-700">${item.quantity}</span>
+                                            <button onclick="window.appActions.updateQty(${item.id}, 1)" class="px-2 py-1 hover:bg-slate-100 transition-colors">+</button>
                                         </div>
-                                        <span class="font-bold text-sm">R$ ${(item.price * item.quantity).toFixed(2)}</span>
+                                        <span class="font-bold text-sm text-slate-900">R$ ${(item.price * item.quantity).toFixed(2)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -245,10 +267,10 @@
                 </div>
                 <div class="p-6 bg-slate-50 border-t">
                     <div class="flex justify-between items-center mb-6">
-                        <span class="text-slate-500">Total</span>
-                        <span class="text-2xl font-extrabold">R$ ${total.toFixed(2)}</span>
+                        <span class="text-slate-500 font-medium">Total</span>
+                        <span class="text-2xl font-extrabold text-slate-900">R$ ${total.toFixed(2)}</span>
                     </div>
-                    <button class="w-full bg-amber-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-amber-100" onclick="showToast('Pedido finalizado (Simulação)')">Finalizar Pedido</button>
+                    <button class="w-full bg-amber-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-amber-200 hover:bg-amber-700 transition-all disabled:opacity-50" ${state.cart.length === 0 ? 'disabled' : ''} onclick="window.appActions.showToast('Pedido finalizado!')">Finalizar Pedido</button>
                 </div>
             </div>`;
         }
@@ -257,17 +279,19 @@
             if (!state.isLoginModalOpen) return '';
             return `
             <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[60] flex items-center justify-center p-4">
-                <div class="bg-white w-full max-w-md rounded-[2rem] shadow-2xl animate-fade-in overflow-hidden">
-                    <div class="bg-amber-600 p-8 text-white text-center">
-                        <i class="fa-solid fa-lock text-3xl mb-4"></i>
-                        <h2 class="text-2xl font-bold">Acesso Administrativo</h2>
+                <div class="bg-white w-full max-w-md rounded-[2rem] shadow-2xl p-8 overflow-hidden animate-fade-in">
+                    <div class="text-center mb-8">
+                        <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i class="fa-solid fa-lock text-2xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-800">Acesso Administrativo</h2>
                     </div>
-                    <form onsubmit="handleLogin(event)" class="p-8 space-y-4">
-                        <input type="text" id="login-user" placeholder="Usuário (admin)" class="w-full bg-slate-50 border p-3 rounded-xl outline-none focus:ring-2 focus:ring-amber-500" required>
-                        <input type="password" id="login-pass" placeholder="Senha (123)" class="w-full bg-slate-50 border p-3 rounded-xl outline-none focus:ring-2 focus:ring-amber-500" required>
-                        <div id="login-error" class="text-red-500 text-xs hidden text-center">Credenciais inválidas.</div>
-                        <button type="submit" class="w-full bg-amber-600 text-white py-3 rounded-xl font-bold">Entrar no Painel</button>
-                        <button type="button" onclick="toggleLoginModal()" class="w-full text-slate-400 text-sm py-2">Cancelar</button>
+                    <form onsubmit="window.appActions.handleLogin(event)" class="space-y-4">
+                        <input type="text" id="login-user" placeholder="admin" class="w-full border border-slate-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-amber-500" required>
+                        <input type="password" id="login-pass" placeholder="123" class="w-full border border-slate-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-amber-500" required>
+                        <div id="login-error" class="text-red-500 text-xs hidden text-center font-medium">Credenciais inválidas.</div>
+                        <button type="submit" class="w-full bg-amber-600 text-white py-3 rounded-xl font-bold hover:bg-amber-700 transition-all shadow-lg shadow-amber-100">Entrar</button>
+                        <button type="button" onclick="window.appActions.toggleLoginModal()" class="w-full text-slate-400 text-sm mt-2">Cancelar</button>
                     </form>
                 </div>
             </div>`;
@@ -276,28 +300,30 @@
         function renderAIAssistant() {
             return `
             <div class="fixed bottom-6 left-6 z-[40]">
-                <button onclick="toggleChat()" class="w-14 h-14 rounded-full bg-amber-600 text-white shadow-2xl flex items-center justify-center transition-transform hover:scale-110">
+                <button onclick="window.appActions.toggleChat()" class="w-14 h-14 rounded-full bg-amber-600 text-white shadow-2xl flex items-center justify-center transition-transform hover:scale-110 active:scale-95">
                     <i class="fa-solid ${state.isChatOpen ? 'fa-xmark' : 'fa-robot'} text-xl"></i>
                 </button>
                 ${state.isChatOpen ? `
-                <div class="absolute bottom-16 left-0 w-[320px] sm:w-[380px] h-[480px] bg-white rounded-3xl shadow-2xl border flex flex-col overflow-hidden animate-fade-in">
+                <div class="absolute bottom-16 left-0 w-[320px] sm:w-[380px] h-[500px] bg-white rounded-3xl shadow-2xl border flex flex-col overflow-hidden animate-fade-in">
                     <div class="bg-amber-600 p-4 text-white flex items-center gap-3">
-                        <i class="fa-solid fa-robot text-xl"></i>
+                        <i class="fa-solid fa-robot text-lg"></i>
                         <h3 class="font-bold">Especialista Avícola AI</h3>
                     </div>
                     <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 text-sm">
                         ${state.chatMessages.map(m => `
                             <div class="flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}">
-                                <div class="max-w-[85%] px-4 py-2 rounded-2xl ${m.role === 'user' ? 'bg-amber-600 text-white rounded-tr-none' : 'bg-white border text-slate-700 rounded-tl-none shadow-sm'}">
+                                <div class="max-w-[85%] px-4 py-2 rounded-2xl shadow-sm ${m.role === 'user' ? 'bg-amber-600 text-white rounded-tr-none' : 'bg-white border text-slate-700 rounded-tl-none'}">
                                     ${m.content}
                                 </div>
                             </div>
                         `).join('')}
-                        ${state.isChatLoading ? `<div class="text-xs text-slate-400 animate-pulse">Pensando...</div>` : ''}
+                        ${state.isChatLoading ? `<div class="text-xs text-slate-400 animate-pulse italic">Digitando...</div>` : ''}
                     </div>
-                    <div class="p-4 border-t flex gap-2">
-                        <input type="text" id="chat-input" placeholder="Dúvida técnica?" class="flex-1 bg-slate-100 border-none rounded-xl px-4 py-2 text-sm outline-none">
-                        <button onclick="sendChatMessage()" class="bg-amber-600 text-white p-2 rounded-xl"><i class="fa-solid fa-paper-plane"></i></button>
+                    <div class="p-4 border-t bg-white flex gap-2">
+                        <input type="text" id="chat-input" placeholder="Tire sua dúvida técnica..." class="flex-1 bg-slate-100 border-none rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500">
+                        <button onclick="window.appActions.sendChatMessage()" class="bg-amber-600 text-white p-2.5 rounded-xl hover:bg-amber-700 transition-colors">
+                            <i class="fa-solid fa-paper-plane text-xs"></i>
+                        </button>
                     </div>
                 </div>` : ''}
             </div>`;
@@ -305,97 +331,102 @@
 
         function renderFooter() {
             return `
-            <footer class="bg-white border-t border-slate-100 py-12 mt-12">
-                <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-12">
-                    <div>
-                        <div class="flex items-center gap-2 mb-4">
-                            <div class="w-8 h-8 bg-amber-600 rounded-lg flex items-center justify-center text-white"><i class="fa-solid fa-egg text-xs"></i></div>
-                            <span class="font-bold text-lg">AvícolaTech AI</span>
-                        </div>
-                        <p class="text-slate-500 text-sm">Modernizando o campo com soluções inteligentes.</p>
-                    </div>
-                    <div><h4 class="font-bold mb-4 text-xs uppercase text-slate-400">Links</h4><ul class="text-sm space-y-2 text-slate-600"><li>Catálogo</li><li>Sobre</li></ul></div>
-                    <div><h4 class="font-bold mb-4 text-xs uppercase text-slate-400">Contato</h4><p class="text-sm text-slate-600">contato@avicolatech.ai</p></div>
-                    <div><h4 class="font-bold mb-4 text-xs uppercase text-slate-400">Siga-nos</h4><div class="flex gap-4 text-slate-400"><i class="fa-brands fa-instagram"></i><i class="fa-brands fa-facebook"></i></div></div>
-                </div>
+            <footer class="bg-white border-t border-slate-100 py-12 mt-12 text-center text-slate-400 text-sm">
+                <p>© 2024 AvícolaTech AI. Nutrimos o futuro da produção rural.</p>
             </footer>`;
         }
 
-        // --- Eventos e Handlers ---
-        window.changeView = (view) => { state.view = view; render(); };
-        window.setCategory = (cat) => { state.selectedCategory = cat; render(); };
-        window.toggleCart = () => { state.isCartOpen = !state.isCartOpen; render(); };
-        window.toggleLoginModal = () => { state.isLoginModalOpen = !state.isLoginModalOpen; render(); };
-        window.toggleChat = () => { state.isChatOpen = !state.isChatOpen; render(); };
+        // --- Handlers Globais expostos ao window ---
+        window.appActions = {
+            changeView: (view) => { state.view = view; render(); },
+            setCategory: (cat) => { state.selectedCategory = cat; render(); },
+            toggleCart: () => { state.isCartOpen = !state.isCartOpen; render(); },
+            toggleLoginModal: () => { state.isLoginModalOpen = !state.isLoginModalOpen; render(); },
+            toggleChat: () => { state.isChatOpen = !state.isChatOpen; render(); },
 
-        window.handleAdminToggle = () => {
-            if (state.isLoggedIn) state.view = state.view === 'store' ? 'admin' : 'store';
-            else state.isLoginModalOpen = true;
-            render();
-        };
+            handleAdminToggle: () => {
+                if (state.isLoggedIn) state.view = state.view === 'store' ? 'admin' : 'store';
+                else state.isLoginModalOpen = true;
+                render();
+            },
 
-        window.handleLogin = (e) => {
-            e.preventDefault();
-            const u = document.getElementById('login-user').value;
-            const p = document.getElementById('login-pass').value;
-            if (u === 'admin' && p === '123') {
-                state.isLoggedIn = true;
-                state.isLoginModalOpen = false;
-                state.view = 'admin';
-                showToast("Bem-vindo, Administrador!");
-            } else {
-                document.getElementById('login-error').classList.remove('hidden');
-            }
-            render();
-        };
+            handleLogin: (e) => {
+                e.preventDefault();
+                const u = document.getElementById('login-user').value;
+                const p = document.getElementById('login-pass').value;
+                if (u === 'admin' && p === '123') {
+                    state.isLoggedIn = true;
+                    state.isLoginModalOpen = false;
+                    state.view = 'admin';
+                    window.appActions.showToast("Logado com sucesso!");
+                } else {
+                    document.getElementById('login-error').classList.remove('hidden');
+                }
+                render();
+            },
 
-        window.onLogout = () => { state.isLoggedIn = false; state.view = 'store'; render(); };
+            onLogout: () => {
+                state.isLoggedIn = false;
+                state.view = 'store';
+                window.appActions.showToast("Sessão encerrada.");
+                render();
+            },
 
-        window.addToCart = (id) => {
-            const product = state.products.find(p => p.id === id);
-            const exists = state.cart.find(item => item.id === id);
-            if (exists) exists.quantity++;
-            else state.cart.push({ ...product, quantity: 1 });
-            showToast(`${product.name} adicionado!`);
-            render();
-        };
+            addToCart: (id) => {
+                const product = state.products.find(p => p.id === id);
+                const exists = state.cart.find(item => item.id === id);
+                if (exists) exists.quantity++;
+                else state.cart.push({ ...product, quantity: 1 });
+                window.appActions.showToast(`${product.name} adicionado!`);
+                render();
+            },
 
-        window.updateQty = (id, delta) => {
-            const item = state.cart.find(i => i.id === id);
-            item.quantity = Math.max(1, item.quantity + delta);
-            render();
-        };
+            updateQty: (id, delta) => {
+                const item = state.cart.find(i => i.id === id);
+                if (item) {
+                    item.quantity = Math.max(0, item.quantity + delta);
+                    if (item.quantity === 0) {
+                        state.cart = state.cart.filter(i => i.id !== id);
+                    }
+                    render();
+                }
+            },
 
-        window.deleteProduct = (id) => {
-            if (confirm("Excluir produto?")) {
-                state.products = state.products.filter(p => p.id !== id);
-                showToast("Removido com sucesso");
+            deleteProduct: (id) => {
+                if (confirm("Excluir produto do catálogo?")) {
+                    state.products = state.products.filter(p => p.id !== id);
+                    window.appActions.showToast("Removido.");
+                    render();
+                }
+            },
+
+            showToast: (msg) => {
+                const container = document.getElementById('toast-container');
+                if (!container) return;
+                const toast = document.createElement('div');
+                toast.className = "bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl text-sm animate-fade-in flex items-center gap-2";
+                toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> ${msg}`;
+                container.appendChild(toast);
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            },
+
+            sendChatMessage: async () => {
+                const input = document.getElementById('chat-input');
+                const val = input.value.trim();
+                if (!val || state.isChatLoading) return;
+
+                state.chatMessages.push({ role: 'user', content: val });
+                state.isChatLoading = true;
+                render();
+
+                const response = await getAIAssistance(val);
+                state.chatMessages.push({ role: 'model', content: response });
+                state.isChatLoading = false;
                 render();
             }
-        };
-
-        window.showToast = (msg) => {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = "bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-fade-in";
-            toast.innerHTML = `<i class="fa-solid fa-check text-emerald-500"></i><span class="text-sm font-medium">${msg}</span>`;
-            container.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        };
-
-        window.sendChatMessage = async () => {
-            const input = document.getElementById('chat-input');
-            const val = input.value.trim();
-            if (!val || state.isChatLoading) return;
-
-            state.chatMessages.push({ role: 'user', content: val });
-            state.isChatLoading = true;
-            render();
-
-            const response = await getAIAssistance(val);
-            state.chatMessages.push({ role: 'model', content: response });
-            state.isChatLoading = false;
-            render();
         };
 
         function attachEvents() {
@@ -403,50 +434,24 @@
             if (search) {
                 search.addEventListener('input', (e) => {
                     state.searchQuery = e.target.value;
-                    // Debounce simples para renderização
                     clearTimeout(window.searchTimeout);
-                    window.searchTimeout = setTimeout(() => {
-                        const filtered = state.products.filter(p => {
-                            const matchesCat = state.selectedCategory === 'Todos' || p.category === state.selectedCategory;
-                            const matchesSearch = p.name.toLowerCase().includes(state.searchQuery.toLowerCase());
-                            return matchesCat && matchesSearch;
-                        });
-                        // Em vez de renderizar tudo, renderiza apenas a grid de produtos se estiver na loja
-                        if (state.view === 'store') {
-                             document.getElementById('catalog').nextElementSibling.innerHTML = filtered.map(p => `
-                                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden group hover:shadow-md transition-all">
-                                    <div class="aspect-square bg-slate-100 overflow-hidden relative">
-                                        <img src="${p.image}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" alt="${p.name}">
-                                        <div class="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded text-xs font-bold">★ ${p.rating}</div>
-                                    </div>
-                                    <div class="p-5">
-                                        <span class="text-[10px] font-bold text-amber-600 uppercase mb-1 block">${p.category}</span>
-                                        <h3 class="font-bold text-slate-800 truncate">${p.name}</h3>
-                                        <p class="text-slate-500 text-xs line-clamp-2 mt-1 h-8">${p.description}</p>
-                                        <div class="flex items-center justify-between mt-4">
-                                            <span class="text-lg font-bold text-slate-900">R$ ${p.price.toFixed(2)}</span>
-                                            <button onclick="addToCart(${p.id})" class="bg-amber-600 text-white p-2.5 rounded-xl hover:bg-amber-700 shadow-lg"><i class="fa-solid fa-cart-plus"></i></button>
-                                        </div>
-                                    </div>
-                                </div>
-                            `).join('');
-                        }
-                    }, 300);
+                    window.searchTimeout = setTimeout(() => { render(); }, 300);
                 });
             }
-
             const chatInput = document.getElementById('chat-input');
             if (chatInput) {
-                chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChatMessage(); });
+                chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') window.appActions.sendChatMessage(); });
             }
-
-            // Manter scroll do chat no fundo
             const chatBox = document.getElementById('chat-box');
             if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        // Inicializar app
-        render();
+        // --- Inicialização ---
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', render);
+        } else {
+            render();
+        }
 
     </script>
 <script type="module" src="/index.tsx"></script>
