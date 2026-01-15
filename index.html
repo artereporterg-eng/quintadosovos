@@ -18,9 +18,9 @@
 <script type="importmap">
 {
   "imports": {
-    "@google/genai": "https://esm.sh/@google/genai@^1.36.0",
     "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3"
+    "react": "https://esm.sh/react@^19.2.3",
+    "@google/genai": "https://esm.sh/@google/genai@^1.36.0"
   }
 }
 </script>
@@ -33,8 +33,6 @@
     </div>
 
     <script type="module">
-        import { GoogleGenAI } from "https://esm.sh/@google/genai";
-
         // --- Dados Iniciais ---
         const initialProducts = [
             { id: 1, name: "Incubadora Digital Automática", description: "Capacidade para 54 ovos com controle de umidade e viragem automática.", price: 850.00, category: "Incubação", image: "https://images.unsplash.com/photo-1594488358434-738980327f1c?q=80&w=400&h=400&fit=crop", rating: 4.9 },
@@ -55,34 +53,8 @@
             view: 'store',
             isLoggedIn: false,
             isCartOpen: false,
-            isLoginModalOpen: false,
-            chatMessages: [{ role: 'model', content: 'Olá! Sou o assistente AvícolaTech AI. Como posso ajudar com sua produção hoje?' }],
-            isChatOpen: false,
-            isChatLoading: false
+            isLoginModalOpen: false
         };
-
-        // --- Lógica da IA (Gemini) ---
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-        async function getAIAssistance(message) {
-            const context = state.products.map(p => `- ${p.name}: ${p.description} (R$ ${p.price})`).join('\n');
-            const prompt = `Você é um especialista em avicultura da AvícolaTech AI. 
-            Use este catálogo para ajudar o cliente:
-            ${context}
-            Responda em Português do Brasil com tom profissional e prestativo. Ajude com manejo, nutrição e escolha de equipamentos.
-            Pergunta do cliente: ${message}`;
-
-            try {
-                const response = await ai.models.generateContent({
-                    model: 'gemini-3-flash-preview',
-                    contents: prompt
-                });
-                return response.text;
-            } catch (e) {
-                console.error("AI Error:", e);
-                return "Desculpe, tive um problema ao processar sua consulta técnica. Por favor, tente novamente em instantes.";
-            }
-        }
 
         // --- Motor de Renderização ---
         function render() {
@@ -97,7 +69,6 @@
                 ${renderFooter()}
                 ${renderCartDrawer()}
                 ${renderLoginModal()}
-                ${renderAIAssistant()}
                 <div id="toast-container" class="fixed bottom-24 right-6 z-[100] space-y-2"></div>
             `;
             attachEvents();
@@ -297,38 +268,6 @@
             </div>`;
         }
 
-        function renderAIAssistant() {
-            return `
-            <div class="fixed bottom-6 left-6 z-[40]">
-                <button onclick="window.appActions.toggleChat()" class="w-14 h-14 rounded-full bg-amber-600 text-white shadow-2xl flex items-center justify-center transition-transform hover:scale-110 active:scale-95">
-                    <i class="fa-solid ${state.isChatOpen ? 'fa-xmark' : 'fa-robot'} text-xl"></i>
-                </button>
-                ${state.isChatOpen ? `
-                <div class="absolute bottom-16 left-0 w-[320px] sm:w-[380px] h-[500px] bg-white rounded-3xl shadow-2xl border flex flex-col overflow-hidden animate-fade-in">
-                    <div class="bg-amber-600 p-4 text-white flex items-center gap-3">
-                        <i class="fa-solid fa-robot text-lg"></i>
-                        <h3 class="font-bold">Especialista Avícola AI</h3>
-                    </div>
-                    <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 text-sm">
-                        ${state.chatMessages.map(m => `
-                            <div class="flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}">
-                                <div class="max-w-[85%] px-4 py-2 rounded-2xl shadow-sm ${m.role === 'user' ? 'bg-amber-600 text-white rounded-tr-none' : 'bg-white border text-slate-700 rounded-tl-none'}">
-                                    ${m.content}
-                                </div>
-                            </div>
-                        `).join('')}
-                        ${state.isChatLoading ? `<div class="text-xs text-slate-400 animate-pulse italic">Digitando...</div>` : ''}
-                    </div>
-                    <div class="p-4 border-t bg-white flex gap-2">
-                        <input type="text" id="chat-input" placeholder="Tire sua dúvida técnica..." class="flex-1 bg-slate-100 border-none rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500">
-                        <button onclick="window.appActions.sendChatMessage()" class="bg-amber-600 text-white p-2.5 rounded-xl hover:bg-amber-700 transition-colors">
-                            <i class="fa-solid fa-paper-plane text-xs"></i>
-                        </button>
-                    </div>
-                </div>` : ''}
-            </div>`;
-        }
-
         function renderFooter() {
             return `
             <footer class="bg-white border-t border-slate-100 py-12 mt-12 text-center text-slate-400 text-sm">
@@ -342,7 +281,6 @@
             setCategory: (cat) => { state.selectedCategory = cat; render(); },
             toggleCart: () => { state.isCartOpen = !state.isCartOpen; render(); },
             toggleLoginModal: () => { state.isLoginModalOpen = !state.isLoginModalOpen; render(); },
-            toggleChat: () => { state.isChatOpen = !state.isChatOpen; render(); },
 
             handleAdminToggle: () => {
                 if (state.isLoggedIn) state.view = state.view === 'store' ? 'admin' : 'store';
@@ -411,21 +349,6 @@
                     toast.style.opacity = '0';
                     setTimeout(() => toast.remove(), 300);
                 }, 3000);
-            },
-
-            sendChatMessage: async () => {
-                const input = document.getElementById('chat-input');
-                const val = input.value.trim();
-                if (!val || state.isChatLoading) return;
-
-                state.chatMessages.push({ role: 'user', content: val });
-                state.isChatLoading = true;
-                render();
-
-                const response = await getAIAssistance(val);
-                state.chatMessages.push({ role: 'model', content: response });
-                state.isChatLoading = false;
-                render();
             }
         };
 
@@ -438,12 +361,6 @@
                     window.searchTimeout = setTimeout(() => { render(); }, 300);
                 });
             }
-            const chatInput = document.getElementById('chat-input');
-            if (chatInput) {
-                chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') window.appActions.sendChatMessage(); });
-            }
-            const chatBox = document.getElementById('chat-box');
-            if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
         }
 
         // --- Inicialização ---
