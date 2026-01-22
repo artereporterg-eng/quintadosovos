@@ -4,10 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quinta dos Ovos - Soluções para Avicultura</title>
-    <!-- Estilos e Fontes -->
+    <title>Quinta dos Ovos - ERP Avícola</title>
+    
+    <!-- Bibliotecas Externas -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
         body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
@@ -25,17 +27,13 @@
 
         .modal-overlay { background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); }
     </style>
-    <!-- Import Map Consolidado: Garante que todos os módulos usem a mesma versão do React (18.2.0) -->
-    <script type="importmap">
+<script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@18.2.0",
-    "react-dom": "https://esm.sh/react-dom@18.2.0",
-    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-    "htm": "https://esm.sh/htm@3.1.1",
-    "@google/genai": "https://esm.sh/@google/genai@1.38.0",
-    "react/": "https://esm.sh/react@18.2.0/",
-    "react-dom/": "https://esm.sh/react-dom@18.2.0/"
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.38.0"
   }
 }
 </script>
@@ -43,7 +41,442 @@
 </head>
 <body class="bg-slate-50 text-slate-900 overflow-x-hidden">
     <div id="root"></div>
-    <!-- O index.tsx será carregado automaticamente pelo ambiente -->
+
+    <script type="module">
+        import React, { useState, useMemo, useEffect, useRef } from 'https://esm.sh/react@18.2.0';
+        import ReactDOM from 'https://esm.sh/react-dom@18.2.0/client';
+        import htm from 'https://esm.sh/htm@3.1.1';
+
+        const html = htm.bind(React.createElement);
+
+        // --- DADOS INICIAIS ---
+        const initialProducts = [
+            { id: 1, name: "Incubadora Digital Automática", description: "Capacidade para 54 ovos com controle de umidade.", price: 850000, category: "Incubação", image: "https://images.unsplash.com/photo-1594488358434-738980327f1c?q=80&w=400", rating: 4.9, stock: 10, costPrice: 595000 },
+            { id: 2, name: "Ração Postura Premium 20kg", description: "Balanceada com cálcio para máxima produtividade.", price: 115000, category: "Rações", image: "https://images.unsplash.com/photo-1516467508483-a7212febe31a?q=80&w=400", rating: 4.8, stock: 25, costPrice: 80500 },
+            { id: 3, name: "Bebedouro Automático Nipple", description: "Kit com 10 unidades. Mantém a água limpa.", price: 89000, category: "Equipamentos", image: "https://images.unsplash.com/photo-1589923188900-85dae523342b?q=80&w=400", rating: 4.7, stock: 15, costPrice: 62300 },
+            { id: 4, name: "Suplemento Vitamínico", description: "Complexo A, D3 e E para crescimento saudável.", price: 45000, category: "Saúde", image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=400", rating: 4.6, stock: 40, costPrice: 31500 }
+        ];
+
+        const SLIDE_IMAGES = [
+            { url: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1200", title: "Nossa Fazenda", subtitle: "Tradição e tecnologia no coração de Angola" },
+            { url: "https://images.unsplash.com/photo-1516467508483-a7212febe31a?q=80&w=1200", title: "Infraestrutura Moderna", subtitle: "Ambientes controlados para máxima qualidade" },
+            { url: "https://images.unsplash.com/photo-1582722134903-b1299002897d?q=80&w=1200", title: "Ovos Premium", subtitle: "Frescor garantido da nossa produção" }
+        ];
+
+        // --- COMPONENTES AUXILIARES ---
+
+        const Toast = ({ message, isVisible, onClose }) => {
+            useEffect(() => {
+                if (isVisible) {
+                    const timer = setTimeout(onClose, 3000);
+                    return () => clearTimeout(timer);
+                }
+            }, [isVisible, onClose]);
+
+            return html`
+                <div className=${`fixed bottom-24 right-6 z-[200] transform transition-all duration-500 ${isVisible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-10 opacity-0 scale-90 pointer-events-none'}`}>
+                    <div className="bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700">
+                        <div className="w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center">
+                            <i className="fa-solid fa-check text-[10px]"></i>
+                        </div>
+                        <span className="text-sm font-medium">${message}</span>
+                    </div>
+                </div>
+            `;
+        };
+
+        const ProductCard = ({ product, onAddToCart }) => html`
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden transition-all hover:shadow-md group">
+                <div className="relative aspect-square overflow-hidden bg-slate-100">
+                    <img src=${product.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-semibold text-slate-600 shadow-sm">★ ${product.rating}</div>
+                </div>
+                <div className="p-5">
+                    <span className="text-xs font-medium text-amber-600 uppercase tracking-wider mb-2 block">${product.category}</span>
+                    <h3 className="text-lg font-semibold text-slate-800 mb-1 leading-tight group-hover:text-amber-600 transition-colors">${product.name}</h3>
+                    <p className="text-slate-500 text-sm mb-4 line-clamp-2 h-10">${product.description}</p>
+                    <div className="flex items-center justify-between">
+                        <span className="text-xl font-bold text-slate-900">Kz ${product.price.toLocaleString()}</span>
+                        <button onClick=${() => onAddToCart(product)} className="bg-amber-600 hover:bg-amber-700 text-white p-3 rounded-xl shadow-lg transition-all active:scale-95">
+                            <i className="fa-solid fa-cart-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const CartDrawer = ({ isOpen, onClose, items, onUpdateQuantity, onRemove, onCheckout }) => {
+            const total = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+            return html`
+                <div className=${`fixed inset-0 bg-black/40 backdrop-blur-sm z-[150] transition-opacity ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick=${onClose} />
+                <div className=${`fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-[160] transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                    <div className="flex flex-col h-full">
+                        <div className="p-6 border-b flex items-center justify-between">
+                            <h2 className="text-xl font-bold flex items-center gap-2"><i className="fa-solid fa-shopping-bag text-amber-600"></i> Seu Pedido</h2>
+                            <button onClick=${onClose}><i className="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                            ${items.length === 0 ? html`<div className="h-full flex flex-col items-center justify-center text-slate-400 gap-4"><i className="fa-solid fa-cart-shopping text-6xl opacity-20"></i><p>Carrinho vazio</p></div>` : 
+                                items.map(item => html`
+                                <div key=${item.id} className="flex gap-4">
+                                    <div className="w-20 h-20 bg-slate-100 rounded-lg overflow-hidden shrink-0"><img src=${item.image} className="w-full h-full object-cover" /></div>
+                                    <div className="flex-1">
+                                        <h4 className="font-semibold text-slate-800">${item.name}</h4>
+                                        <p className="text-sm text-amber-600 font-black">Kz ${item.price.toLocaleString()}</p>
+                                        <div className="flex items-center justify-between mt-2">
+                                            <div className="flex items-center border rounded-lg">
+                                                <button className="px-2 py-1" onClick=${() => onUpdateQuantity(item.id, -1)}>-</button>
+                                                <span className="px-3 border-x text-sm">${item.quantity}</span>
+                                                <button className="px-2 py-1" onClick=${() => onUpdateQuantity(item.id, 1)}>+</button>
+                                            </div>
+                                            <button onClick=${() => onRemove(item.id)} className="text-slate-400 hover:text-red-500"><i className="fa-solid fa-trash-can"></i></button>
+                                        </div>
+                                    </div>
+                                </div>`)}
+                        </div>
+                        <div className="p-6 border-t bg-slate-50">
+                            <div className="flex justify-between items-center mb-6">
+                                <span className="text-slate-500">Total</span>
+                                <span className="text-2xl font-bold text-slate-900">Kz ${total.toLocaleString()}</span>
+                            </div>
+                            <button disabled=${items.length === 0} onClick=${onCheckout} className="w-full bg-amber-600 text-white py-4 rounded-2xl font-bold shadow-lg disabled:bg-slate-300">Finalizar Pedido</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const InvoiceModal = ({ isOpen, onClose, invoice }) => {
+            if (!isOpen || !invoice) return null;
+            return html`
+                <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[200] flex items-center justify-center p-4 print:static print:bg-white">
+                    <div className="bg-white w-full max-w-3xl rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh] print:shadow-none">
+                        <div className="p-10 overflow-y-auto flex-1">
+                            <div className="flex justify-between border-b pb-8 mb-8">
+                                <div>
+                                    <h1 className="text-3xl font-black text-slate-900">QUINTA DOS OVOS</h1>
+                                    <p className="text-xs text-slate-500">Huambo, Angola | NIF: 5001234567</p>
+                                </div>
+                                <div className="text-right">
+                                    <div className="bg-slate-900 text-white px-4 py-1 rounded mb-2">FATURA / RECIBO</div>
+                                    <p className="font-black">Nº ${invoice.id}</p>
+                                    <p className="text-xs text-slate-500">${invoice.date}</p>
+                                </div>
+                            </div>
+                            <table className="w-full mb-8">
+                                <thead className="bg-slate-50 text-[10px] uppercase font-black text-slate-400">
+                                    <tr><th className="p-4 text-left">Artigo</th><th className="p-4 text-center">P. Unit</th><th className="p-4 text-center">Qtd</th><th className="p-4 text-right">Total</th></tr>
+                                </thead>
+                                <tbody>
+                                    ${invoice.items.map(item => html`
+                                        <tr key=${item.id} className="text-sm border-b">
+                                            <td className="p-4 font-bold">${item.name}</td>
+                                            <td className="p-4 text-center">Kz ${item.price.toLocaleString()}</td>
+                                            <td className="p-4 text-center">${item.quantity}</td>
+                                            <td className="p-4 text-right font-black">Kz ${(item.price * item.quantity).toLocaleString()}</td>
+                                        </tr>
+                                    `)}
+                                </tbody>
+                            </table>
+                            <div className="text-right space-y-2">
+                                <p className="text-sm font-bold text-slate-500">TOTAL: <span className="text-2xl font-black text-amber-600 ml-4">Kz ${invoice.total.toLocaleString()}</span></p>
+                            </div>
+                        </div>
+                        <div className="p-8 bg-slate-50 border-t flex gap-4 no-print">
+                            <button onClick=${() => window.print()} className="flex-1 bg-amber-600 text-white py-4 rounded-xl font-black uppercase tracking-widest"><i className="fa-solid fa-print mr-2"></i> Imprimir</button>
+                            <button onClick=${onClose} className="px-8 py-4 text-slate-500 font-black uppercase">Fechar</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const LoginModal = ({ isOpen, onClose, onLogin }) => {
+            const [u, setU] = useState('');
+            const [p, setP] = useState('');
+            if (!isOpen) return null;
+            return html`
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden p-8">
+                        <div className="text-center mb-8">
+                            <div className="w-16 h-16 bg-indigo-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-4"><i className="fa-solid fa-lock text-2xl"></i></div>
+                            <h2 className="text-2xl font-bold">Acesso ERP</h2>
+                        </div>
+                        <div className="space-y-4">
+                            <input className="w-full bg-slate-50 p-4 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Usuário" value=${u} onChange=${e => setU(e.target.value)} />
+                            <input className="w-full bg-slate-50 p-4 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" type="password" placeholder="Senha" value=${p} onChange=${e => setP(e.target.value)} />
+                            <button onClick=${() => onLogin(u, p)} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold">Entrar</button>
+                            <button onClick=${onClose} className="w-full text-slate-400 font-medium">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        // --- COMPONENTE ADMIN PANEL ---
+        const AdminPanel = ({ 
+            currentUser, products, employees, users, transactions, currentAccounts,
+            onLogout, onAddProduct, onEditProduct, onDeleteProduct, onAddEmployee, onPaySalary, onLocalCheckout 
+        }) => {
+            const [tab, setTab] = useState('dashboard');
+            const [posCart, setPosCart] = useState([]);
+            const [posSearch, setPosSearch] = useState('');
+
+            const filteredProducts = products.filter(p => p.name.toLowerCase().includes(posSearch.toLowerCase()));
+            const totalIn = transactions.filter(t => t.type === 'ENTRADA').reduce((a, b) => a + b.amount, 0);
+            const totalOut = transactions.filter(t => t.type === 'SAIDA').reduce((a, b) => a + b.amount, 0);
+
+            return html`
+                <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 min-h-[700px] flex flex-col md:flex-row overflow-hidden">
+                    <aside className="w-full md:w-72 bg-slate-50 border-r p-6 flex flex-col gap-2 no-print">
+                        <div className="mb-8 px-4"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Acesso de ${currentUser.displayName}</p></div>
+                        <nav className="space-y-1">
+                            <button onClick=${() => setTab('dashboard')} className=${`w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-sm ${tab === 'dashboard' ? 'bg-amber-600 text-white' : 'text-slate-500'}`}><i className="fa-solid fa-gauge"></i> Dashboard</button>
+                            <button onClick=${() => setTab('caixa')} className=${`w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-sm ${tab === 'caixa' ? 'bg-amber-600 text-white' : 'text-slate-500'}`}><i className="fa-solid fa-cash-register"></i> Caixa (POS)</button>
+                            <button onClick=${() => setTab('stock')} className=${`w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-sm ${tab === 'stock' ? 'bg-amber-600 text-white' : 'text-slate-500'}`}><i className="fa-solid fa-boxes"></i> Inventário</button>
+                            <button onClick=${() => setTab('rh')} className=${`w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-sm ${tab === 'rh' ? 'bg-amber-600 text-white' : 'text-slate-500'}`}><i className="fa-solid fa-users"></i> RH</button>
+                        </nav>
+                        <button onClick=${onLogout} className="mt-auto text-red-400 font-bold p-4 flex items-center gap-3"><i className="fa-solid fa-right-from-bracket"></i> Sair</button>
+                    </aside>
+
+                    <main className="flex-1 p-8 md:p-12 overflow-y-auto max-h-[90vh]">
+                        ${tab === 'dashboard' && html`
+                            <div className="space-y-8 animate-fade-in">
+                                <h2 className="text-3xl font-black uppercase">Painel Geral</h2>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="p-8 bg-emerald-50 rounded-[2.5rem] border border-emerald-100 text-emerald-700"><span className="text-[10px] font-black uppercase">Receitas</span><div className="text-3xl font-black mt-2">Kz ${totalIn.toLocaleString()}</div></div>
+                                    <div className="p-8 bg-red-50 rounded-[2.5rem] border border-red-100 text-red-700"><span className="text-[10px] font-black uppercase">Despesas</span><div className="text-3xl font-black mt-2">Kz ${totalOut.toLocaleString()}</div></div>
+                                    <div className="p-8 bg-slate-900 rounded-[2.5rem] text-amber-500"><span className="text-[10px] font-black uppercase text-slate-400">Saldo</span><div className="text-3xl font-black mt-2">Kz ${(totalIn - totalOut).toLocaleString()}</div></div>
+                                </div>
+                            </div>
+                        `}
+
+                        ${tab === 'caixa' && html`
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full animate-fade-in">
+                                <div className="lg:col-span-2 space-y-6">
+                                    <div className="flex justify-between items-center">
+                                        <h2 className="text-2xl font-black uppercase">Ponto de Venda</h2>
+                                        <input className="bg-slate-100 p-2 rounded-xl text-sm" placeholder="Buscar..." value=${posSearch} onChange=${e => setPosSearch(e.target.value)} />
+                                    </div>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 h-[55vh] overflow-y-auto">
+                                        ${filteredProducts.map(p => html`
+                                            <button key=${p.id} onClick=${() => {
+                                                const ex = posCart.find(i => i.id === p.id);
+                                                if(ex) setPosCart(posCart.map(i => i.id === p.id ? {...i, quantity: i.quantity + 1} : i));
+                                                else setPosCart([...posCart, {...p, quantity: 1}]);
+                                            }} className="bg-white p-4 rounded-3xl border hover:border-amber-400 text-left">
+                                                <img src=${p.image} className="w-full aspect-square object-cover rounded-xl mb-2" />
+                                                <div className="text-xs font-bold truncate">${p.name}</div>
+                                                <div className="text-xs font-black text-amber-600">Kz ${p.price.toLocaleString()}</div>
+                                            </button>
+                                        `)}
+                                    </div>
+                                </div>
+                                <div className="bg-slate-900 rounded-[2rem] p-6 text-white flex flex-col">
+                                    <h3 className="font-black mb-6 uppercase">Carrinho POS</h3>
+                                    <div className="flex-1 space-y-2 overflow-y-auto">
+                                        ${posCart.map(i => html`<div className="flex justify-between text-xs"><span>${i.name}</span><span className="font-bold">x${i.quantity}</span></div>`)}
+                                    </div>
+                                    <div className="mt-6 pt-6 border-t border-slate-800">
+                                        <div className="flex justify-between font-black text-xl mb-4"><span>Total</span><span className="text-amber-500">Kz ${posCart.reduce((a,b)=>a+(b.price*b.quantity),0).toLocaleString()}</span></div>
+                                        <button onClick=${() => {onLocalCheckout(posCart); setPosCart([]);}} className="w-full bg-amber-600 py-4 rounded-xl font-bold">Fechar Venda</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `}
+                        
+                        ${tab === 'stock' && html`
+                            <div className="space-y-8 animate-fade-in">
+                                <div className="flex justify-between items-center">
+                                    <h2 className="text-2xl font-black uppercase">Stock</h2>
+                                    <button onClick=${onAddProduct} className="bg-amber-600 text-white px-6 py-2 rounded-xl font-bold">+ Novo</button>
+                                </div>
+                                <div className="bg-white rounded-3xl border overflow-hidden">
+                                    <table className="w-full text-left">
+                                        <thead className="bg-slate-50 text-[10px] uppercase font-black text-slate-400">
+                                            <tr><th className="p-6">Produto</th><th className="p-6">Stock</th><th className="p-6">Preço</th><th className="p-6">Ações</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            ${products.map(p => html`
+                                                <tr key=${p.id} className="border-b text-sm">
+                                                    <td className="p-6 font-bold">${p.name}</td>
+                                                    <td className="p-6"><span className=${`px-2 py-1 rounded ${p.stock <= 5 ? 'bg-red-50 text-red-600' : 'bg-slate-50'}`}>${p.stock} UN</span></td>
+                                                    <td className="p-6 font-black">Kz ${p.price.toLocaleString()}</td>
+                                                    <td className="p-6">
+                                                        <button onClick=${() => onEditProduct(p)} className="p-2 text-slate-400"><i className="fa-solid fa-pen"></i></button>
+                                                        <button onClick=${() => onDeleteProduct(p.id)} className="p-2 text-slate-400 ml-2"><i className="fa-solid fa-trash"></i></button>
+                                                    </td>
+                                                </tr>
+                                            `)}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        `}
+
+                        ${tab === 'rh' && html`
+                            <div className="space-y-8 animate-fade-in">
+                                <h2 className="text-2xl font-black uppercase">Funcionários</h2>
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                    ${employees.map(e => html`
+                                        <div key=${e.id} className="bg-white p-6 rounded-3xl border flex justify-between items-center">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400"><i className="fa-solid fa-user"></i></div>
+                                                <div><div className="font-black">${e.name}</div><div className="text-[10px] text-amber-600 uppercase font-bold">${e.role}</div></div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-sm font-black mb-2">Kz ${e.salary.toLocaleString()}</div>
+                                                <button onClick=${() => onPaySalary(e.id)} className=${`px-4 py-1 rounded-lg text-[10px] font-black ${e.paymentStatus === 'PAGO' ? 'bg-slate-100 text-slate-400' : 'bg-emerald-500 text-white'}`}>
+                                                    ${e.paymentStatus === 'PAGO' ? 'Pago' : 'Pagar'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    `)}
+                                </div>
+                            </div>
+                        `}
+                    </main>
+                </div>
+            `;
+        };
+
+        // --- APLICAÇÃO PRINCIPAL ---
+        const App = () => {
+            const [products, setProducts] = useState(() => JSON.parse(localStorage.getItem('erp_products')) || initialProducts);
+            const [employees, setEmployees] = useState(() => JSON.parse(localStorage.getItem('erp_employees')) || [
+                { id: 1, name: "Carlos Silva", role: "Técnico de Campo", salary: 280000, paymentStatus: 'PENDENTE' },
+                { id: 2, name: "Ana Oliveira", role: "Gerente Financeira", salary: 450000, paymentStatus: 'PENDENTE' }
+            ]);
+            const [users, setUsers] = useState(() => JSON.parse(localStorage.getItem('erp_users')) || [{ id: 1, username: 'admin', password: '123', role: 'admin', displayName: 'Administrador', permissions: ['dashboard', 'caixa', 'stock', 'rh'] }]);
+            const [transactions, setTransactions] = useState(() => JSON.parse(localStorage.getItem('erp_tx')) || []);
+            const [currentAccounts, setAccounts] = useState(() => JSON.parse(localStorage.getItem('erp_acc')) || []);
+            
+            const [cart, setCart] = useState([]);
+            const [isCartOpen, setIsCartOpen] = useState(false);
+            const [view, setView] = useState('store');
+            const [currentUser, setCurrentUser] = useState(null);
+            const [isLoginOpen, setIsLoginOpen] = useState(false);
+            const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
+            const [currentInvoice, setCurrentInvoice] = useState(null);
+            const [toast, setToast] = useState({ msg: '', show: false });
+            const [slide, setSlide] = useState(0);
+
+            useEffect(() => {
+                localStorage.setItem('erp_products', JSON.stringify(products));
+                localStorage.setItem('erp_employees', JSON.stringify(employees));
+                localStorage.setItem('erp_users', JSON.stringify(users));
+                localStorage.setItem('erp_tx', JSON.stringify(transactions));
+                localStorage.setItem('erp_acc', JSON.stringify(currentAccounts));
+            }, [products, employees, users, transactions, currentAccounts]);
+
+            useEffect(() => {
+                const timer = setInterval(() => setSlide(s => (s + 1) % SLIDE_IMAGES.length), 5000);
+                return () => clearInterval(timer);
+            }, []);
+
+            const showToast = (msg) => setToast({ msg, show: true });
+
+            const handleCheckout = (customCart) => {
+                const items = customCart || cart;
+                if (items.length === 0) return;
+                const total = items.reduce((a, b) => a + b.price * b.quantity, 0);
+                const inv = { id: Math.floor(Math.random() * 90000) + 10000, date: new Date().toLocaleString(), items: [...items], total };
+                setTransactions([...transactions, { id: Date.now(), date: new Date().toLocaleDateString(), description: customCart ? 'Venda POS' : 'Venda Loja', amount: total, type: 'ENTRADA' }]);
+                setProducts(products.map(p => {
+                    const ci = items.find(i => i.id === p.id);
+                    return ci ? { ...p, stock: p.stock - ci.quantity } : p;
+                }));
+                setCurrentInvoice(inv);
+                setIsInvoiceOpen(true);
+                if (!customCart) { setCart([]); setIsCartOpen(false); }
+                showToast("Venda processada com sucesso!");
+            };
+
+            const handleLogin = (u, p) => {
+                const user = users.find(x => x.username === u && x.password === p);
+                if (user) { setCurrentUser(user); setIsLoginOpen(false); setView('admin'); showToast(`Bem-vindo, ${user.displayName}!`); }
+                else alert("Credenciais inválidas");
+            };
+
+            return html`
+                <div className="min-h-screen bg-slate-50 flex flex-col">
+                    <header className="sticky top-0 z-[100] bg-white/90 backdrop-blur-md border-b h-20 no-print">
+                        <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
+                            <div className="flex items-center gap-3 cursor-pointer" onClick=${() => setView('store')}>
+                                <div className="w-12 h-12 bg-amber-600 rounded-2xl flex items-center justify-center text-white shadow-xl"><i className="fa-solid fa-egg text-2xl"></i></div>
+                                <h1 className="text-2xl font-black">Quinta <span className="text-amber-600">dos Ovos</span></h1>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <button onClick=${() => setIsCartOpen(true)} className="relative p-3 bg-slate-50 rounded-xl">
+                                    <i className="fa-solid fa-cart-shopping"></i>
+                                    ${cart.length > 0 && html`<span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">${cart.reduce((a,b)=>a+b.quantity,0)}</span>`}
+                                </button>
+                                ${currentUser ? 
+                                    html`<button onClick=${() => setView(view === 'admin' ? 'store' : 'admin')} className="bg-slate-900 text-white px-6 py-3 rounded-xl text-xs font-black uppercase">${view === 'admin' ? 'Ver Loja' : 'Painel ERP'}</button>` :
+                                    html`<button onClick=${() => setIsLoginOpen(true)} className="text-slate-400 font-bold hover:text-amber-600">Entrar</button>`}
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="flex-grow">
+                        ${view === 'admin' && currentUser ? html`
+                            <div className="max-w-7xl mx-auto px-4 py-8">
+                                <${AdminPanel} 
+                                    currentUser=${currentUser} products=${products} employees=${employees} users=${users} transactions=${transactions} currentAccounts=${currentAccounts}
+                                    onLogout=${() => { setCurrentUser(null); setView('store'); }}
+                                    onLocalCheckout=${handleCheckout}
+                                    onPaySalary=${(id) => {
+                                        const e = employees.find(x => x.id === id);
+                                        setTransactions([...transactions, { id: Date.now(), date: new Date().toLocaleDateString(), description: `Salário: ${e.name}`, amount: e.salary, type: 'SAIDA' }]);
+                                        setEmployees(employees.map(x => x.id === id ? {...x, paymentStatus: 'PAGO'} : x));
+                                        showToast("Salário processado!");
+                                    }}
+                                    onAddProduct=${() => { const n = prompt("Nome do Produto:"); if(n) setProducts([...products, {id: Date.now(), name: n, price: 1000, stock: 10, category: 'Geral', image: 'https://images.unsplash.com/photo-1590483736622-39da8caf3501?q=80&w=400', rating: 5}]); }}
+                                    onDeleteProduct=${(id) => setProducts(products.filter(x => x.id !== id))}
+                                />
+                            </div>
+                        ` : html`
+                            <div className="animate-fade-in">
+                                <section className="relative h-[70vh] bg-slate-900 overflow-hidden">
+                                    <img src=${SLIDE_IMAGES[slide].url} className="w-full h-full object-cover opacity-60 transition-all duration-1000" />
+                                    <div className="absolute inset-0 flex flex-col justify-center px-10 md:px-24 text-white">
+                                        <h2 className="text-5xl md:text-7xl font-black uppercase mb-4">${SLIDE_IMAGES[slide].title}</h2>
+                                        <p className="text-xl text-amber-400">${SLIDE_IMAGES[slide].subtitle}</p>
+                                    </div>
+                                </section>
+
+                                <section id="loja" className="py-24 max-w-7xl mx-auto px-4">
+                                    <h2 className="text-4xl font-black mb-12 uppercase">Nossos Produtos</h2>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                                        ${products.map(p => html`<${ProductCard} key=${p.id} product=${p} onAddToCart=${(p) => {
+                                            const ex = cart.find(i => i.id === p.id);
+                                            if(ex) setCart(cart.map(i => i.id === p.id ? {...i, quantity: i.quantity+1} : i));
+                                            else setCart([...cart, {...p, quantity: 1}]);
+                                            showToast(`${p.name} adicionado!`);
+                                        }} />`)}
+                                    </div>
+                                </section>
+                            </div>
+                        `}
+                    </main>
+
+                    <footer className="bg-slate-900 py-12 text-white no-print">
+                        <div className="max-w-7xl mx-auto px-4 text-center">
+                            <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-500">&copy; 2024 QUINTA DOS OVOS ERP • ANGOLA</p>
+                        </div>
+                    </footer>
+
+                    <${CartDrawer} isOpen=${isCartOpen} onClose=${() => setIsCartOpen(false)} items=${cart} onUpdateQuantity=${(id, d) => setCart(cart.map(i => i.id === id ? {...i, quantity: Math.max(1, i.quantity+d)} : i))} onRemove=${(id) => setCart(cart.filter(i => i.id !== id))} onCheckout=${() => handleCheckout()} />
+                    <${LoginModal} isOpen=${isLoginOpen} onClose=${() => setIsLoginOpen(false)} onLogin=${handleLogin} />
+                    <${InvoiceModal} isOpen=${isInvoiceOpen} onClose=${() => setIsInvoiceOpen(false)} invoice=${currentInvoice} />
+                    <${Toast} message=${toast.msg} isVisible=${toast.show} onClose=${() => setToast({ ...toast, show: false })} />
+                </div>
+            `;
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(App));
+    </script>
 <script type="module" src="/index.tsx"></script>
 </body>
 </html>
