@@ -1,5 +1,8 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
+import Header from './components/layout/Header';
+import Hero from './components/layout/Hero';
+import Footer from './components/layout/Footer';
 import ProductCard from './components/ProductCard';
 import CartDrawer from './components/CartDrawer';
 import AdminPanel from './components/AdminPanel';
@@ -10,6 +13,8 @@ import ProductModal from './components/ProductModal';
 import EmployeeModal from './components/EmployeeModal';
 import UserModal from './components/UserModal';
 import AccountModal from './components/AccountModal';
+// Import AI assistant component to provide guidance to users
+import AIAssistant from './components/AIAssistant';
 import { products as initialProducts } from './data/products';
 import { Product, CartItem, User, Employee, Invoice, FinancialTransaction, CurrentAccount } from './types';
 
@@ -23,6 +28,7 @@ const SLIDE_IMAGES = [
 ];
 
 const App: React.FC = () => {
+  // --- Estados do Sistema ---
   const [products, setProducts] = useState<Product[]>(() => {
     const saved = localStorage.getItem('quintadosovos_products');
     return saved ? JSON.parse(saved) : initialProducts;
@@ -80,6 +86,7 @@ const App: React.FC = () => {
     ];
   });
 
+  // --- Estados de Interface ---
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('Todos');
@@ -93,7 +100,7 @@ const App: React.FC = () => {
   const [currentInvoice, setCurrentInvoice] = useState<Invoice | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Estados de Edição / Modais
+  // --- Estados de Modais ---
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
@@ -102,6 +109,7 @@ const App: React.FC = () => {
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
 
+  // --- Efeitos ---
   useEffect(() => {
     localStorage.setItem('quintadosovos_products', JSON.stringify(products));
     localStorage.setItem('quintadosovos_employees', JSON.stringify(employees));
@@ -118,6 +126,7 @@ const App: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // --- Lógica de Negócio ---
   const allCategories = useMemo(() => ['Todos', ...productCategories], [productCategories]);
 
   const filteredProducts = useMemo(() => {
@@ -160,20 +169,6 @@ const App: React.FC = () => {
     }
   };
 
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) element.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleAddCategory = (type: 'PRODUCT' | 'EMPLOYEE' | 'ADMIN', name: string) => {
-    if (!name.trim()) return;
-    if (type === 'PRODUCT') setProductCategories(prev => [...new Set([...prev, name])]);
-    else if (type === 'EMPLOYEE') setEmpCategories(prev => [...new Set([...prev, name])]);
-    else setAdminCategories(prev => [...new Set([...prev, name])]);
-    showToast(`Categoria "${name}" adicionada!`);
-  };
-
-  // Funções de salvamento de entidades
   const handleSaveProduct = (p: Partial<Product>) => {
     if (editingProduct) {
       setProducts(prev => prev.map(item => item.id === editingProduct.id ? { ...item, ...p } as Product : item));
@@ -211,42 +206,27 @@ const App: React.FC = () => {
   };
 
   const handleSaveAccount = (a: Partial<CurrentAccount>) => {
-    const newA = { ...a, id: Date.now(), status: a.balance! < 0 ? 'DEVEDOR' : 'CREDOR' } as CurrentAccount;
+    const newA = { ...a, id: Date.now(), status: (a.balance || 0) < 0 ? 'DEVEDOR' : 'CREDOR' } as CurrentAccount;
     setCurrentAccounts(prev => [...prev, newA]);
     showToast("Conta corrente aberta!");
     setIsAccountModalOpen(false);
   };
 
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) element.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="sticky top-0 z-[100] bg-white/90 backdrop-blur-md border-b border-amber-100 no-print">
-        <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setView('store'); window.scrollTo({top: 0, behavior: 'smooth'}); }}>
-            <div className="w-12 h-12 bg-amber-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-amber-200">
-              <i className="fa-solid fa-egg text-2xl"></i>
-            </div>
-            <h1 className="text-2xl font-black text-slate-900 leading-none">
-              Quinta<span className="text-amber-600 block text-xs tracking-[0.2em] font-black uppercase">dosOvos</span>
-            </h1>
-          </div>
-          <nav className="hidden md:flex items-center gap-10 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-            <button onClick={() => scrollToSection('home')} className="hover:text-amber-600 transition-colors">Home</button>
-            <button onClick={() => scrollToSection('servicos')} className="hover:text-amber-600 transition-colors">Serviços</button>
-            <button onClick={() => scrollToSection('sobre')} className="hover:text-amber-600 transition-colors">Sobre Nós</button>
-          </nav>
-          <div className="flex items-center gap-4">
-            <button onClick={() => setIsCartOpen(true)} className="relative p-3 bg-slate-50 text-slate-700 rounded-xl hover:bg-amber-50 hover:text-amber-600 transition-all">
-              <i className="fa-solid fa-cart-shopping text-lg"></i>
-              {cart.length > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full ring-2 ring-white">{cart.reduce((a,b)=>a+b.quantity,0)}</span>}
-            </button>
-            {isLoggedIn && (
-              <button onClick={() => setView(view === 'store' ? 'admin' : 'store')} className="bg-slate-900 text-white px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-xl">
-                {view === 'admin' ? 'Ver Loja' : 'Painel ERP'}
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
+      <Header 
+        onViewStore={() => { setView('store'); window.scrollTo({top: 0, behavior: 'smooth'}); }}
+        onOpenCart={() => setIsCartOpen(true)}
+        onToggleAdmin={() => setView(view === 'store' ? 'admin' : 'store')}
+        cartCount={cart.reduce((a, b) => a + b.quantity, 0)}
+        isLoggedIn={isLoggedIn}
+        isAdminView={view === 'admin'}
+      />
 
       <main className="flex-grow">
         {view === 'admin' && currentUser ? (
@@ -270,8 +250,14 @@ const App: React.FC = () => {
               onAddUser={() => { setEditingUser(null); setIsUserModalOpen(true); }} 
               onEditUser={(u) => { setEditingUser(u); setIsUserModalOpen(true); }}
               onDeleteUser={(id) => { if(confirm('Apagar utilizador?')) setUsers(prev => prev.filter(u => u.id !== id)) }}
-              onAddAccount={() => { setIsAccountModalOpen(true); }} 
-              onAddCategory={handleAddCategory}
+              onAddAccount={() => setIsAccountModalOpen(true)} 
+              onAddCategory={(t, n) => {
+                if (!n.trim()) return;
+                if (t === 'PRODUCT') setProductCategories(prev => [...new Set([...prev, n])]);
+                else if (t === 'EMPLOYEE') setEmpCategories(prev => [...new Set([...prev, n])]);
+                else setAdminCategories(prev => [...new Set([...prev, n])]);
+                showToast(`Categoria "${n}" adicionada!`);
+              }}
               onRemoveCategory={(t, n) => {
                 if(t === 'PRODUCT') setProductCategories(p => p.filter(x => x !== n));
                 else if(t === 'EMPLOYEE') setEmpCategories(p => p.filter(x => x !== n));
@@ -283,27 +269,14 @@ const App: React.FC = () => {
           </div>
         ) : (
           <div className="animate-fade-in">
-            {/* HERO SLIDESHOW */}
-            <section id="home" className="relative h-[85vh] w-full overflow-hidden bg-slate-900">
-              {SLIDE_IMAGES.map((slide, idx) => (
-                <div key={idx} className={`absolute inset-0 transition-all duration-1000 ease-in-out ${idx === currentSlide ? 'opacity-100 scale-100' : 'opacity-0 scale-110'}`}>
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-slate-900/40 z-10" />
-                  <img src={slide.url} className="w-full h-full object-cover" alt={slide.title} />
-                  <div className="absolute bottom-20 left-10 md:left-24 z-20 max-w-2xl text-white">
-                    <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter mb-4 leading-none">{slide.title}</h2>
-                    <p className="text-lg md:text-xl font-medium text-amber-400 opacity-90">{slide.subtitle}</p>
-                    <button onClick={() => scrollToSection('loja')} className="mt-8 bg-amber-600 hover:bg-amber-700 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest transition-all shadow-2xl active:scale-95">Explorar Produtos</button>
-                  </div>
-                </div>
-              ))}
-              <div className="absolute bottom-10 right-10 z-30 flex gap-2">
-                {SLIDE_IMAGES.map((_, idx) => (
-                  <button key={idx} onClick={() => setCurrentSlide(idx)} className={`h-1.5 transition-all rounded-full ${idx === currentSlide ? 'w-10 bg-amber-500' : 'w-4 bg-white/30'}`} />
-                ))}
-              </div>
-            </section>
+            <Hero 
+              currentSlide={currentSlide} 
+              slides={SLIDE_IMAGES} 
+              onSetSlide={setCurrentSlide}
+              onExplore={() => scrollToSection('loja')}
+            />
 
-            {/* SECTIONS */}
+            {/* Secção de Serviços */}
             <section id="servicos" className="py-24 bg-white">
               <div className="max-w-7xl mx-auto px-4 text-center">
                 <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-600 block mb-2">Nossas Soluções</span>
@@ -311,11 +284,13 @@ const App: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                   {[
                     { icon: "fa-vial-circle-check", title: "Genética Selecionada", desc: "Pintinhos e ovos férteis com linhagens de alto rendimento." },
-                    { icon: "fa-truck-fast", title: "Entrega ao domicílio dos seus produtos", desc: "Logística ágil e segura para receber seus insumos e equipamentos diretamente na sua porta, preservando a qualidade de cada item." },
+                    { icon: "fa-truck-fast", title: "Entrega ao domicílio", desc: "Logística ágil e segura para receber seus insumos e equipamentos diretamente na sua porta." },
                     { icon: "fa-chalkboard-user", title: "Consultoria", desc: "Equipe técnica pronta para otimizar sua produção." }
                   ].map((s, i) => (
                     <div key={i} className="p-10 rounded-[2.5rem] bg-slate-50 border border-slate-100 hover:border-amber-200 hover:shadow-2xl transition-all group text-left">
-                      <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-amber-600 text-2xl shadow-sm mb-6 group-hover:bg-amber-600 group-hover:text-white transition-all"><i className={`fa-solid ${s.icon}`}></i></div>
+                      <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-amber-600 text-2xl shadow-sm mb-6 group-hover:bg-amber-600 group-hover:text-white transition-all">
+                        <i className={`fa-solid ${s.icon}`}></i>
+                      </div>
                       <h3 className="text-xl font-black text-slate-800 mb-4 uppercase tracking-tighter">{s.title}</h3>
                       <p className="text-slate-500 leading-relaxed text-sm font-medium">{s.desc}</p>
                     </div>
@@ -324,6 +299,7 @@ const App: React.FC = () => {
               </div>
             </section>
 
+            {/* Secção Sobre */}
             <section id="sobre" className="py-24 bg-slate-50 overflow-hidden">
               <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center gap-16">
                 <div className="flex-1 space-y-8">
@@ -337,6 +313,7 @@ const App: React.FC = () => {
               </div>
             </section>
 
+            {/* Secção Loja */}
             <section id="loja" className="py-24 bg-white">
               <div className="max-w-7xl mx-auto px-4">
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-8 text-center md:text-left">
@@ -346,64 +323,42 @@ const App: React.FC = () => {
                   </div>
                   <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                     {allCategories.map(cat => (
-                      <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${selectedCategory === cat ? 'bg-amber-600 text-white shadow-lg' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>{cat}</button>
+                      <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${selectedCategory === cat ? 'bg-amber-600 text-white shadow-lg' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>
+                        {cat}
+                      </button>
                     ))}
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                  {filteredProducts.map(p => <ProductCard key={p.id} product={p} onAddToCart={(p) => { 
-                    setCart(prev => {
-                      const ex = prev.find(i => i.id === p.id);
-                      if(ex) return prev.map(i => i.id === p.id ? {...i, quantity: i.quantity+1} : i);
-                      return [...prev, {...p, quantity: 1}];
-                    });
-                    showToast(`${p.name} adicionado!`);
-                  }} />)}
+                  {filteredProducts.map(p => (
+                    <ProductCard key={p.id} product={p} onAddToCart={(p) => { 
+                      setCart(prev => {
+                        const ex = prev.find(i => i.id === p.id);
+                        if(ex) return prev.map(i => i.id === p.id ? {...i, quantity: i.quantity+1} : i);
+                        return [...prev, {...p, quantity: 1}];
+                      });
+                      showToast(`${p.name} adicionado!`);
+                    }} />
+                  ))}
                 </div>
               </div>
             </section>
 
-            <footer className="bg-slate-900 pt-24 pb-12 text-white no-print">
-              <div className="max-w-7xl mx-auto px-4">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20 text-center md:text-left">
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3 justify-center md:justify-start">
-                      <div className="w-10 h-10 bg-amber-600 rounded-xl flex items-center justify-center text-white"><i className="fa-solid fa-egg"></i></div>
-                      <h2 className="text-xl font-black uppercase tracking-tighter">Quinta dos Ovos</h2>
-                    </div>
-                    <p className="text-slate-400 text-sm leading-relaxed font-medium">Excelência e inovação na avicultura angolana. Sua granja com tecnologia de ponta.</p>
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-black uppercase tracking-widest mb-8 text-amber-600">Navegação</h4>
-                    <ul className="space-y-4 text-sm font-bold text-slate-400">
-                      <li><button onClick={() => scrollToSection('home')} className="hover:text-white transition-colors">Home</button></li>
-                      <li><button onClick={() => scrollToSection('servicos')} className="hover:text-white transition-colors">Serviços</button></li>
-                      <li><button onClick={() => scrollToSection('sobre')} className="hover:text-white transition-colors">Sobre Nós</button></li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-black uppercase tracking-widest mb-8 text-amber-600">Contacto</h4>
-                    <p className="text-sm font-bold text-slate-400 mb-2">Huambo, Angola</p>
-                    <p className="text-sm font-bold text-slate-400">comercial@quintadosovos.ao</p>
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-black uppercase tracking-widest mb-8 text-amber-600">ERP Local</h4>
-                    <button onClick={() => setIsLoginModalOpen(true)} className="w-full py-4 border-2 border-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest hover:border-amber-600 hover:text-amber-600 transition-all">Painel Administrativo</button>
-                  </div>
-                </div>
-                <div className="pt-12 border-t border-slate-800 text-center"><p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-600">&copy; 2024 Quinta dos Ovos ERP • Angola</p></div>
-              </div>
-            </footer>
+            <Footer onAdminLogin={() => setIsLoginModalOpen(true)} />
+
+            {/* AI Assistant widget for shopping advice */}
+            <AIAssistant products={products} />
           </div>
         )}
       </main>
 
-      {/* Modais de Entidade */}
+      {/* Modais de Gestão */}
       <ProductModal isOpen={isProductModalOpen} onClose={() => setIsProductModalOpen(false)} onSave={handleSaveProduct} product={editingProduct} categories={productCategories} />
       <EmployeeModal isOpen={isEmployeeModalOpen} onClose={() => setIsEmployeeModalOpen(false)} onSave={handleSaveEmployee} employee={editingEmployee} categories={empCategories} />
       <UserModal isOpen={isUserModalOpen} onClose={() => setIsUserModalOpen(false)} onSave={handleSaveUser} user={editingUser} adminCategories={adminCategories} />
       <AccountModal isOpen={isAccountModalOpen} onClose={() => setIsAccountModalOpen(false)} onSave={handleSaveAccount} />
 
+      {/* Modais de Fluxo */}
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} items={cart} onUpdateQuantity={(id, d) => setCart(prev => prev.map(i => i.id === id ? {...i, quantity: Math.max(1, i.quantity+d)} : i))} onRemove={(id) => setCart(prev => prev.filter(i => i.id !== id))} onCheckout={() => handleCheckout()} />
       <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} onLogin={handleLogin} />
       <InvoiceModal isOpen={isInvoiceOpen} onClose={() => setIsInvoiceOpen(false)} invoice={currentInvoice} />

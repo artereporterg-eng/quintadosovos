@@ -1,5 +1,5 @@
 {
-  "name": "copy-of-backup---quinta-dos-ovos---soluções-para-avicultura",
+  "name": "nova-quinta-dos-ovos---soluções-para-avicultura",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,8 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
     "@google/genai": "^1.38.0"
   },
   "devDependencies": {

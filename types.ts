@@ -23,7 +23,7 @@ export interface User {
   category?: string;
   displayName: string;
   createdAt: string;
-  permissions: string[]; // Lista de slugs das abas permitidas (ex: 'dashboard', 'stock')
+  permissions: string[];
 }
 
 export interface Employee {
@@ -69,7 +69,7 @@ export interface CurrentAccount {
   lastActivity: string;
 }
 
-// Added ChatMessage interface to fix import error in AIAssistant.tsx
+// Fixed missing ChatMessage export for the AI Assistant feature
 export interface ChatMessage {
   role: 'user' | 'model';
   content: string;
